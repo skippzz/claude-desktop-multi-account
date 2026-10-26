@@ -36,7 +36,7 @@ $targets = @(
     (Join-Path $env:USERPROFILE ".claude-$id"),
     $appP,
     (Join-Path ([Environment]::GetFolderPath('Desktop')) "Claude $Name.lnk"),
-    (Join-Path $env:LOCALAPPDATA "ClaudeShortcuts\claude-$id.ico")
+    (Join-Path $env:USERPROFILE ".claude-shortcuts\claude-$id.ico")
 ) | Where-Object { Test-Path $_ }
 
 if (-not $targets) { Write-Host "Nothing to remove for profile '$Name'."; return }

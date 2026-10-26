@@ -12,8 +12,10 @@ Run a second Claude Desktop window signed in to a different Claude account, for 
 
 | | Normal profile (A) | New profile (B) |
 |---|---|---|
-| Desktop app data: login, preferences, extensions | `%APPDATA%\Claude` | `%USERPROFILE%\claude-desktop-b` |
+| Desktop app data: login, preferences, extensions | the app's package folder* | `%USERPROFILE%\claude-desktop-b` |
 | Claude Code data: settings, plugins, memory, session history | `%USERPROFILE%\.claude` | `%USERPROFILE%\.claude-b` |
+
+\* `%LOCALAPPDATA%\Packages\Claude_<id>\LocalCache\Roaming\Claude`. Inside the app this folder also appears as `%APPDATA%\Claude`, but from a normal terminal or Explorer it only exists at the package path.
 
 ## Requirements
 
@@ -81,7 +83,8 @@ It checks that B is signed in to a different account and that B's Code sessions 
 - **`CLAUDE_CONFIG_DIR`** is set in the launcher. The Claude Code sessions that the window starts inherit it, so they use `.claude-b`.
 - **Code sessions log in through the window that started them**, so each window's Code sessions run on that window's account.
 - **The MSIX install blocks starting `Claude.exe` directly** ("Access is denied"). The app ships an alias, `claude-desktop.exe`, which accepts these flags and keeps working across updates. The launcher uses it.
-- **Icons** are made at setup time from your installed app's own artwork: colour for A, grey for B. They're stored in `%LOCALAPPDATA%\ClaudeShortcuts`. No Anthropic artwork is included in this repo.
+- **Icons** are made at setup time from your installed app's own artwork: colour for A, grey for B. They're stored in `%USERPROFILE%\.claude-shortcuts`. No Anthropic artwork is included in this repo.
+- **Nothing is written under AppData.** Programs running inside the Claude app, including Claude Code sessions, have their AppData writes redirected into the app's package folder, where Explorer can't see them. Keeping everything in your user folder means you can run these scripts from a normal terminal or ask Claude to run them for you.
 
 ## Things to know
 

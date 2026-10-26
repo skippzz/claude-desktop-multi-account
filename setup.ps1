@@ -50,11 +50,12 @@ if ($Name -eq 'A') { Fail '"A" is the label for your normal profile. Pick anothe
 
 $id      = $Name.ToLower()
 $srcCode = Join-Path $env:USERPROFILE '.claude'
-$srcApp  = Join-Path $env:APPDATA 'Claude'
 $dstCode = Join-Path $env:USERPROFILE ".claude-$id"
 $dstApp  = Join-Path $env:USERPROFILE "claude-desktop-$id"
 $alias   = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\claude-desktop.exe'
-$iconDir = Join-Path $env:LOCALAPPDATA 'ClaudeShortcuts'
+# Not under AppData: when this runs inside the Claude app (e.g. from a Claude Code session), Windows
+# redirects AppData writes into the app's package folder, where Explorer can't find the icons.
+$iconDir = Join-Path $env:USERPROFILE '.claude-shortcuts'
 $desktop = [Environment]::GetFolderPath('Desktop')
 $utf8    = New-Object System.Text.UTF8Encoding $false
 $guid    = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
@@ -128,6 +129,10 @@ $pkg = Get-AppxPackage -Name Claude | Sort-Object { [version]$_.Version } -Desce
 if (-not $pkg -or -not (Test-Path $alias)) {
     Fail 'Claude Desktop (the Windows app from claude.ai/download) was not found. Only the current MSIX build is supported.'
 }
+# The MSIX app keeps its data in its package folder. %APPDATA%\Claude only leads there from inside
+# the app, so look in the package folder first.
+$srcApp = Join-Path $env:LOCALAPPDATA "Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Claude"
+if (-not (Test-Path $srcApp)) { $srcApp = Join-Path $env:APPDATA 'Claude' }
 foreach ($p in $dstCode, $dstApp) {
     if (Test-Path $p) { Fail "Profile '$Name' already exists ($p). Use another name, or remove it first with uninstall.ps1 -Name $Name." }
 }

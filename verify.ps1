@@ -22,8 +22,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $id      = $Name.ToLower()
 $codeA   = Join-Path $env:USERPROFILE '.claude'
-$appA    = Join-Path $env:APPDATA 'Claude'
 $codeP   = Join-Path $env:USERPROFILE ".claude-$id"
+# the MSIX app keeps its data in its package folder; %APPDATA%\Claude only leads there from inside the app
+$pkg     = Get-AppxPackage -Name Claude | Select-Object -First 1
+$appA    = if ($pkg) { Join-Path $env:LOCALAPPDATA "Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Claude" }
+if (-not $appA -or -not (Test-Path $appA)) { $appA = Join-Path $env:APPDATA 'Claude' }
 $appP    = Join-Path $env:USERPROFILE "claude-desktop-$id"
 $problems = 0
 

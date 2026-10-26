@@ -18,7 +18,7 @@
     Close the profile without asking if it is running.
 
 .PARAMETER SourceDataDir
-    App data folder of your normal profile. Default: %APPDATA%\Claude
+    App data folder of your normal profile. Default: the Claude app's own data folder.
 
 .PARAMETER ProfileDataDir
     App data folder of the target profile. Default: %USERPROFILE%\claude-desktop-<name>
@@ -31,12 +31,18 @@ param(
     [ValidatePattern('^[A-Za-z0-9_-]{1,20}$')]
     [string]$Name = 'B',
     [switch]$Close,
-    [string]$SourceDataDir = (Join-Path $env:APPDATA 'Claude'),
+    [string]$SourceDataDir,
     [string]$ProfileDataDir
 )
 
 $ErrorActionPreference = 'Stop'
 function Fail([string]$message) { Write-Host $message -ForegroundColor Red; exit 1 }
+if (-not $SourceDataDir) {
+    # the MSIX app keeps its data in its package folder; %APPDATA%\Claude only leads there from inside the app
+    $pkg = Get-AppxPackage -Name Claude | Select-Object -First 1
+    if ($pkg) { $SourceDataDir = Join-Path $env:LOCALAPPDATA "Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Claude" }
+    if (-not $SourceDataDir -or -not (Test-Path $SourceDataDir)) { $SourceDataDir = Join-Path $env:APPDATA 'Claude' }
+}
 if (-not $ProfileDataDir) { $ProfileDataDir = Join-Path $env:USERPROFILE "claude-desktop-$($Name.ToLower())" }
 $utf8 = New-Object System.Text.UTF8Encoding $false
 function Read-Json($path) { [IO.File]::ReadAllText($path) | ConvertFrom-Json }
