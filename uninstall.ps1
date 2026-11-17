@@ -36,8 +36,10 @@ $targets = @(
     (Join-Path $env:USERPROFILE ".claude-$id"),
     $appP,
     (Join-Path ([Environment]::GetFolderPath('Desktop')) "Claude $Name.lnk"),
-    (Join-Path $env:USERPROFILE ".claude-shortcuts\claude-$id.ico")
+    (Join-Path $env:USERPROFILE ".claude-shortcuts\Claude $Name.lnk")
 ) | Where-Object { Test-Path $_ }
+# the icon is claude-<id>.<colour>.ico (claude-<id>.ico from older versions)
+$targets = @($targets) + @(Get-ChildItem (Join-Path $env:USERPROFILE '.claude-shortcuts') -Filter "claude-$id.*ico" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
 
 if (-not $targets) { Write-Host "Nothing to remove for profile '$Name'."; return }
 

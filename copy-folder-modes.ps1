@@ -38,10 +38,15 @@ param(
 $ErrorActionPreference = 'Stop'
 function Fail([string]$message) { Write-Host $message -ForegroundColor Red; exit 1 }
 if (-not $SourceDataDir) {
-    # the MSIX app keeps its data in its package folder; %APPDATA%\Claude only leads there from inside the app
+    # newer app builds keep their data in %LOCALAPPDATA%\Claude-Data\<package>, older ones in the package
+    # folder, which %APPDATA%\Claude only leads to from inside the app
     $pkg = Get-AppxPackage -Name Claude | Select-Object -First 1
-    if ($pkg) { $SourceDataDir = Join-Path $env:LOCALAPPDATA "Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Claude" }
-    if (-not $SourceDataDir -or -not (Test-Path $SourceDataDir)) { $SourceDataDir = Join-Path $env:APPDATA 'Claude' }
+    if ($pkg) {
+        $SourceDataDir = @((Join-Path $env:LOCALAPPDATA "Claude-Data\$($pkg.PackageFamilyName)"),
+                           (Join-Path $env:LOCALAPPDATA "Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Claude")) |
+            Where-Object { Test-Path (Join-Path $_ 'config.json') } | Select-Object -First 1
+    }
+    if (-not $SourceDataDir) { $SourceDataDir = Join-Path $env:APPDATA 'Claude' }
 }
 if (-not $ProfileDataDir) { $ProfileDataDir = Join-Path $env:USERPROFILE "claude-desktop-$($Name.ToLower())" }
 $utf8 = New-Object System.Text.UTF8Encoding $false
